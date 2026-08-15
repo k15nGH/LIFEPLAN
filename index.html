@@ -272,6 +272,11 @@ body.pv .money,body.pv input[type=number],body.pv canvas{filter:blur(6px);user-s
   <table class="rows" id="incTbl"><thead><tr><th class="chk">有</th><th>名前</th><th>開始年</th><th>年額(万)</th><th></th></tr></thead><tbody></tbody></table>
   <button class="addbtn" id="addInc">＋ 収入の柱を足す</button>
   <p class="hint">リタイア後も続く収入（不動産・事業・botなど）。今日の価値で入力、インフレ率で伸びます。公的年金は第一帳で設定。</p>
+  <div class="fgroup" style="margin-top:18px"><h4>不動産の購入計画（ローンで資産を増やす）</h4>
+    <table class="rows" id="propTbl"><thead><tr><th class="chk">有</th><th>物件名</th><th>購入年</th><th>価格(万)</th><th>自己資金(万)</th><th>借入(万)</th><th>金利(%)</th><th>返済年数</th><th>純収入(万/年)</th><th>年返済→完済</th><th></th></tr></thead><tbody></tbody></table>
+    <button class="addbtn" id="addProp">＋ 物件を足す</button>
+    <p class="hint">自己資金（頭金＋諸費用）は購入年に資産から差し引き。純収入＝家賃−管理費・税金など（ローン返済は自動計算して別途差し引く）。家賃はインフレ連動。物件は購入価格のまま純資産に計上（値上がり・売却は未考慮）。ローン残高は図四と純資産の点線に反映。上の「収入の柱」で同じ物件を二重に入れないよう注意。</p>
+  </div>
 </section>
 
 <section class="sec" id="sec-goals" hidden>
@@ -306,7 +311,7 @@ body.pv .money,body.pv input[type=number],body.pv canvas{filter:blur(6px);user-s
 "use strict";
 const K="lifeplan_v1", Y0=new Date().getFullYear();
 /* ▼ 更新のたびにここを書き換える ▼ */
-const APP_VER="3.2", APP_UPDATED="2026年8月15日";
+const APP_VER="3.3", APP_UPDATED="2026年8月15日";
 const uid=()=>Math.random().toString(36).slice(2,9);
 const OWNERS=["私","妻","子ども","共有"];
 const TYPES={cash:"現金・預金",fx:"外貨($)",inv:"投資",ins:"保険積立",oth:"その他"};
@@ -320,6 +325,7 @@ const DEF=()=>({v:2, retireAge:45, ui:{mode:"tab",tab:"sec-judge",pie:"owner"},
  assets:[{id:uid(),on:true,name:"普通預金",owner:"共有",type:"cash",amt:500}],
  loans:[{id:uid(),on:true,name:"住宅ローン",balance:2000,monthly:7,rate:0.7}],
  incomes:[{id:uid(),on:true,name:"不動産の純収益",start:Y0+8,annual:200}],
+ props:[],
  kids:[{id:uid(),on:true,name:"第1子",birth:Y0-3,uni:500}],
  goals:[{id:uid(),on:true,name:"家族旅行",type:"once",year:Y0+1,start:0,end:0,cost:60},
         {id:uid(),on:true,name:"習いごと",type:"annual",year:0,start:Y0,end:Y0+15,cost:40}]});
@@ -328,7 +334,7 @@ function normalize(s){
  const d=DEF();
  s.basic={...d.basic,...(s.basic||{})};
  s.ui={...d.ui,...(s.ui||{})};
- for(const k of ["assets","loans","incomes","kids","goals"]) s[k]=Array.isArray(s[k])?s[k]:d[k];
+ for(const k of ["assets","loans","incomes","kids","goals","props"]) s[k]=Array.isArray(s[k])?s[k]:(d[k]||[]);
  s.retireAge=s.retireAge??45; s.v=2; return s;
 }
 function migrate(s){
@@ -385,7 +391,23 @@ function loanPlan(){
   }
   per.push(row);
  }
- return{pay,bal,per,maxY};
+ // 不動産購入計画のスケジュール
+ const ppay={},pbal={},pval={},pinfo={};
+ for(const P of S.props||[]){
+  if(!P.on||!+P.year){pinfo[P.id]={pay:0,done:"—"};continue;}
+  const n=Math.max(1,Math.round(+P.years||1)), r=(+P.rate||0)/100;
+  const A=+P.loan>0?(r>0?(+P.loan)*r/(1-Math.pow(1+r,-n)):(+P.loan)/n):0;
+  pinfo[P.id]={pay:A,done:+P.loan>0?(+P.year+n-1)+"年":"—"};
+  const bals={}; let b=+P.loan||0;
+  for(let y=+P.year;y<=Y0+65;y++){
+   pval[y]=(pval[y]||0)+(+P.price||0);
+   if(b>0.5){b=b*(1+r)-A; const bb=Math.max(0,b);
+    ppay[y]=(ppay[y]||0)+A; bals[y]=bb; pbal[y]=(pbal[y]||0)+bb;
+    maxY=Math.max(maxY,y);}
+  }
+  if(+P.loan>0)per.push({name:P.name+"（購入）",bals,done:pinfo[P.id].done});
+ }
+ return{pay,bal,per,maxY,ppay,pbal,pval,pinfo};
 }
 const debtNow=()=>S.loans.filter(l=>l.on).reduce((a,l)=>a+(+l.balance||0),0);
 const astYen=a=>a.type==="fx"?(+a.amt||0)*(+S.basic.fx||0)/10000:(+a.amt||0);
@@ -406,6 +428,11 @@ function simFrom(startYear,startBal,retAge,LP,retFn){
    if(age<b.insEnd)cf-=+b.insAnnual||0;
    cf-=LP.pay[y]||0;
   }
+  for(const P of S.props||[])if(P.on&&+P.year){
+   if(y===+P.year){cf-=+P.down||0; ev.push(P.name+" 購入");}
+   if(y>=+P.year)cf+=(+P.net||0)*F;
+  }
+  cf-=LP.ppay[y]||0;
   if(age>=b.pensionAge)cf+=(+b.pension||0)*F;
   for(const i of S.incomes)if(i.on&&y>=+i.start){cf+=(+i.annual||0)*F; if(y===+i.start)ev.push(i.name+" 開始");}
   for(const g of S.goals)if(g.on){
@@ -472,8 +499,8 @@ function judge(){
  let wt="—";
  if(r0&&have>0){wt=r0.cf<0?(Math.abs(r0.cf)/have*100).toFixed(1)+"%":"取り崩しなし";}
  $("kWdr").textContent=wt;
- const A=assetsNow(),D=debtNow();
- $("nwA").textContent=fmt(A); $("nwD").textContent=fmt(D); $("nwN").textContent=fmt(A-D);
+ const A=assetsNow(),D=debtNow()+(LP.pbal[Y0]||0),PV=LP.pval[Y0]||0;
+ $("nwA").textContent=fmt(A); $("nwD").textContent=fmt(D); $("nwN").textContent=fmt(A-D+PV);
  // 早見表
  const tb=document.querySelector("#quick tbody"); tb.innerHTML="";
  for(const a of [40,45,50,55,60]){
@@ -487,7 +514,7 @@ function judge(){
 function drawCharts(sim,LP){
  const L=sim.rows.map(r=>r.age+"歳"), retIdx=sim.rows.findIndex(r=>r.y>=sim.retY);
  [ch1,ch2,ch3,ch4].forEach(c=>c&&c.destroy());
- const nw=sim.rows.map(r=>r.bal-(LP.bal[r.y]||0));
+ const nw=sim.rows.map(r=>r.bal-(LP.bal[r.y]||0)-(LP.pbal[r.y]||0)+(LP.pval[r.y]||0));
  ch1=new Chart($("ch1"),{type:"line",
   data:{labels:L,datasets:[
    {data:sim.rows.map(r=>r.bal),borderWidth:2,pointRadius:0,label:"資産",
@@ -526,7 +553,7 @@ function renderYears(sim,LP){
  for(const r of sim.rows){
   tb.insertAdjacentHTML("beforeend",`<tr${r.y===sim.retY?' class="now"':''}><td>${r.y}</td><td>${r.age}</td>
    <td class="money" style="color:${r.cf>=0?"var(--take)":"var(--shu)"}">${fmt(r.cf)}</td>
-   <td class="money">${fmt(r.bal)}</td><td class="money">${fmt(r.bal-(LP.bal[r.y]||0))}</td>
+   <td class="money">${fmt(r.bal)}</td><td class="money">${fmt(r.bal-(LP.bal[r.y]||0)-(LP.pbal[r.y]||0)+(LP.pval[r.y]||0))}</td>
    <td style="text-align:left;font-size:11.5px;color:var(--sub)">${r.ev.join("・")}</td></tr>`);}
 }
 
@@ -593,10 +620,24 @@ function renderRows(){
     :num("start",g.start,'style="max-width:76px"')+" 〜 "+num("end",g.end,'style="max-width:76px"')}</td>
   <td data-l="金額(万)">${num("cost",g.cost)}</td>
   <td class="act"><button class="mini del">消す</button></td>`,["type"]);
+ rowTable("propTbl",S.props,p=>`
+  <td class="chk"><input type="checkbox" data-f="on" ${p.on?"checked":""}></td>
+  <td class="namecell" data-l="物件名"><input type="text" data-f="name" value="${p.name}"></td>
+  <td data-l="購入年">${num("year",p.year)}</td>
+  <td data-l="価格(万)">${num("price",p.price)}</td>
+  <td data-l="自己資金(万)">${num("down",p.down)}</td>
+  <td data-l="借入(万)">${num("loan",p.loan)}</td>
+  <td data-l="金利(%)">${num("rate",p.rate,'step="0.1"')}</td>
+  <td data-l="返済年数">${num("years",p.years)}</td>
+  <td data-l="純収入(万/年)">${num("net",p.net)}</td>
+  <td class="calc" data-l="年返済→完済" data-prop="${p.id}">—</td>
+  <td class="act"><button class="mini del">消す</button></td>`);
 }
 function renderCalcCells(LP){
  S.assets.forEach(a=>{const td=document.querySelector(`[data-yen="${a.id}"]`); if(td)td.textContent=fmt(astYen(a));});
  S.loans.forEach((l,i)=>{const td=document.querySelector(`[data-done="${l.id}"]`); if(td)td.textContent=l.on?LP.per[i].done:"—";});
+ (S.props||[]).forEach(p=>{const td=document.querySelector(`[data-prop="${p.id}"]`);
+  if(td){const i=LP.pinfo[p.id]; td.textContent=(p.on&&i&&i.pay)?`約${Math.round(i.pay)}万/年 → ${i.done}`:"—";}});
 }
 function update(structural){save(); if(structural)renderRows(); judge();}
 
@@ -627,23 +668,29 @@ async function keyFrom(pass,salt){
 function dl(name,text){const a=document.createElement("a");
  a.href=URL.createObjectURL(new Blob([text],{type:"application/json"}));a.download=name;a.click();
  URL.revokeObjectURL(a.href);}
+const nowStamp=()=>{const d=new Date(),z=n=>String(n).padStart(2,"0");
+ return{file:`${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}`,
+        disp:`${d.getFullYear()}/${z(d.getMonth()+1)}/${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`};};
 async function exportEnc(){
  const pass=prompt("バックアップ用のパスワードを決めてください（復元時に必要）");if(!pass)return;
+ const st=nowStamp();
  const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
  const key=await keyFrom(pass,salt);
  const data=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,new TextEncoder().encode(JSON.stringify(S)));
- dl(`lifeplan-${Y0}.enc.json`,JSON.stringify({enc:true,salt:b64(salt),iv:b64(iv),data:b64(data)}));
- stat("暗号化バックアップを書き出しました。このファイルはコミットしないでください。");}
+ dl(`lifeplan_${st.file}.enc.json`,JSON.stringify({enc:true,exportedAt:st.disp,salt:b64(salt),iv:b64(iv),data:b64(data)}));
+ stat(`暗号化バックアップを書き出しました（${st.disp}）。このファイルはコミットしないでください。`);}
 async function importAny(file){
  try{
   const j=JSON.parse(await file.text());
+  let stamp=j.exportedAt||null;
   if(j.enc){const pass=prompt("このバックアップのパスワード");if(pass==null)return;
    try{const key=await keyFrom(pass,unb64(j.salt));
     const raw=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(j.iv)},key,unb64(j.data));
     S=migrate(JSON.parse(new TextDecoder().decode(raw)));}
    catch(e){alert("パスワードが違うか、ファイルが壊れています。");return;}}
-  else S=migrate(j);
-  save();renderAll();stat("読み込みました。");
+  else S=migrate(j.data&&j.exportedAt?j.data:j);
+  save();renderAll();
+  stat(`読み込みました ｜ このデータの書き出し日時: ${stamp||"記録なし（旧形式のファイル）"}`);
  }catch(e){alert("JSONファイルとして読み取れませんでした。");}
 }
 
@@ -662,11 +709,13 @@ $("addLoan").onclick=()=>{S.loans.push({id:uid(),on:true,name:"新しいロー�
 $("addInc").onclick=()=>{S.incomes.push({id:uid(),on:true,name:"新しい収入",start:Y0+5,annual:100});update(true);};
 $("addKid").onclick=()=>{S.kids.push({id:uid(),on:true,name:"子",birth:Y0,uni:500});update(true);};
 $("addGoal").onclick=()=>{S.goals.push({id:uid(),on:true,name:"新しい目標",type:"once",year:Y0+1,start:Y0,end:Y0+3,cost:50});update(true);};
+$("addProp").onclick=()=>{S.props.push({id:uid(),on:true,name:"新しい物件",year:Y0+2,price:3000,down:600,loan:2400,rate:2,years:25,net:150});update(true);};
 $("pvbtn").onclick=e=>{const on=document.body.classList.toggle("pv");
  e.target.setAttribute("aria-pressed",on);e.target.textContent=on?"表示":"隠す";};
 $("expEnc").onclick=()=>{$("menu").open=false;exportEnc();};
-$("expPlain").onclick=()=>{$("menu").open=false;dl(`lifeplan-${Y0}.json`,JSON.stringify(S,null,1));
- stat("平文JSONを書き出しました。個人情報を含むためコミット・共有はしないでください。");};
+$("expPlain").onclick=()=>{$("menu").open=false;const st=nowStamp();
+ dl(`lifeplan_${st.file}.json`,JSON.stringify({exportedAt:st.disp,data:S},null,1));
+ stat(`平文JSONを書き出しました（${st.disp}）。個人情報を含むためコミット・共有はしないでください。`);};
 $("impBtn").onclick=()=>{$("menu").open=false;$("impFile").click();};
 $("impFile").addEventListener("change",e=>{if(e.target.files[0])importAny(e.target.files[0]);e.target.value="";});
 $("resetBtn").onclick=()=>{$("menu").open=false;
@@ -688,6 +737,7 @@ function openReport(){
  const b=S.basic, today=new Date().toLocaleDateString("ja-JP");
  const astRows=S.assets.map(a=>`<tr class="${a.on?"":"ref"}"><td>${esc(a.name)}</td><td>${esc(a.owner)}</td><td>${TYPES[a.type]||""}</td><td class="r">${fmt(astYen(a))}${a.on?"":"（参考）"}</td></tr>`).join("");
  const loanRows=S.loans.filter(l=>l.on).map(l=>`<tr><td>${esc(l.name)}</td><td class="r">${fmt(+l.balance)}</td><td class="r">月${l.monthly}万</td><td class="r">${LP.per[S.loans.indexOf(l)].done}</td></tr>`).join("")||`<tr><td colspan="4">なし</td></tr>`;
+ const propRows=(S.props||[]).filter(p=>p.on).map(p=>`<tr><td>${esc(p.name)}</td><td class="r">${p.year}年</td><td class="r">${fmt(+p.price)}</td><td class="r">${fmt(+p.down)}</td><td class="r">${fmt(+p.loan)}</td><td class="r">${fmt(+p.net)}/年</td><td class="r">${LP.pinfo[p.id]?LP.pinfo[p.id].done:"—"}</td></tr>`).join("");
  const incRows=S.incomes.filter(i=>i.on).map(i=>`<tr><td>${esc(i.name)}</td><td class="r">${i.start}年〜</td><td class="r">${fmt(+i.annual)}/年</td></tr>`).join("")||`<tr><td colspan="3">なし</td></tr>`;
  const kidRows=S.kids.filter(k=>k.on).map(k=>`<tr><td>${esc(k.name)}</td><td class="r">${k.birth}年生</td><td class="r">大学 ${fmt(+k.uni)}（${+k.birth+18}〜${+k.birth+21}年）</td></tr>`).join("")||`<tr><td colspan="3">—</td></tr>`;
  const gs=S.goals.filter(g=>g.on).slice().sort((x,y)=>(x.type==="once"?+x.year:+x.start)-(y.type==="once"?+y.year:+y.start));
@@ -715,6 +765,7 @@ function openReport(){
   <h3>いまの家計 ｜ 資産 ${fmt(assetsNow())} − 負債 ${fmt(debtNow())} ＝ 純資産 ${fmt(assetsNow()-debtNow())}</h3>
   <table><tr><th>資産</th><th>持ち主</th><th>種類</th><th class="r">円換算</th></tr>${astRows}</table>
   <table><tr><th>ローン</th><th class="r">残高</th><th class="r">返済</th><th class="r">完済予定</th></tr>${loanRows}</table>
+  ${propRows?`<h3>不動産の購入計画</h3><table><tr><th>物件</th><th class="r">購入年</th><th class="r">価格</th><th class="r">自己資金</th><th class="r">借入</th><th class="r">純収入</th><th class="r">完済</th></tr>${propRows}</table>`:""}
   <h3>リタイア年齢の早見表</h3>
   <table><tr><th>年齢</th><th class="r">予測資産</th><th class="r">必要資産</th><th class="r">判定</th></tr>${quick}</table>
   <div class="two">

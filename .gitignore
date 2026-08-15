@@ -1,3 +1,4 @@
+# 個人データ（絶対にコミットしない）
 mydata.json
-lifeplan-*.json
+lifeplan*.json
 *.enc.json

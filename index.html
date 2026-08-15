@@ -16,116 +16,194 @@
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root{
-  --paper:#F4F2EC; --card:#FBFAF6; --ink:#22303C; --sub:#6B6A5E;
-  --ai:#2B5B7E; --shu:#C73E3A; --take:#4E8A63; --yama:#C99A2E; --nezu:#8A8578; --line:#D9D3C5;
-}
+:root{--paper:#F4F2EC;--card:#FBFAF6;--ink:#22303C;--sub:#6B6A5E;
+ --ai:#2B5B7E;--shu:#C73E3A;--take:#4E8A63;--yama:#C99A2E;--nezu:#8A8578;--line:#D9D3C5}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);
-  font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;
-  font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1060px;margin:0 auto;padding:20px 16px 64px}
-header{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between;
-  border-bottom:3px double var(--ink);padding-bottom:14px;margin-bottom:20px}
-h1{font-family:"Shippori Mincho",serif;font-weight:800;font-size:30px;letter-spacing:.12em;margin:0}
-h1 small{display:block;font-family:"Zen Kaku Gothic New",sans-serif;font-weight:500;font-size:11px;letter-spacing:.28em;color:var(--sub)}
-.tools{display:flex;gap:8px;flex-wrap:wrap}
+ font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;
+ font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:16px 14px 64px}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;
+ border-bottom:3px double var(--ink);padding-bottom:12px;margin-bottom:12px}
+h1{font-family:"Shippori Mincho",serif;font-weight:800;font-size:26px;letter-spacing:.12em;margin:0}
+h1 small{display:block;font-family:"Zen Kaku Gothic New",sans-serif;font-weight:500;font-size:10px;letter-spacing:.28em;color:var(--sub)}
+.tools{display:flex;gap:8px;align-items:center}
 button{font:inherit;font-size:12.5px;font-weight:500;padding:7px 12px;border-radius:4px;cursor:pointer;
-  border:1px solid var(--ink);background:var(--card);color:var(--ink)}
+ border:1px solid var(--ink);background:var(--card);color:var(--ink)}
 button:hover{background:var(--ink);color:var(--card)}
 button.shu{border-color:var(--shu);color:var(--shu)} button.shu:hover{background:var(--shu);color:#fff}
 :focus-visible{outline:2px solid var(--ai);outline-offset:2px}
-section,.chart-box{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px;margin-bottom:16px}
+/* 表示切替とメニュー */
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:4px;overflow:hidden}
+.seg button{border:none;border-radius:0;padding:6px 10px;font-size:12px}
+.seg button.on{background:var(--ink);color:var(--card)}
+details.menu{position:relative}
+details.menu summary{list-style:none;cursor:pointer;font-size:12.5px;font-weight:500;
+ padding:7px 12px;border:1px solid var(--ink);border-radius:4px;background:var(--card)}
+details.menu summary::-webkit-details-marker{display:none}
+details.menu[open] summary{background:var(--ink);color:var(--card)}
+details.menu .dd{position:absolute;right:0;top:calc(100% + 6px);z-index:60;background:var(--card);
+ border:1px solid var(--ink);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:200px;
+ box-shadow:0 6px 18px rgba(34,48,60,.18)}
+details.menu .dd button{text-align:left;border-color:var(--line)}
+/* タブバー */
+nav.tabs{position:sticky;top:0;z-index:50;background:var(--paper);display:flex;gap:6px;
+ overflow-x:auto;white-space:nowrap;padding:8px 0;border-bottom:2px solid var(--ink);
+ -webkit-overflow-scrolling:touch;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{border:1px solid var(--line);background:#EDEAE0;color:var(--sub);border-radius:16px;
+ padding:6px 14px;font-size:12.5px;flex:0 0 auto}
+nav.tabs button[aria-selected=true]{background:var(--ink);color:var(--card);border-color:var(--ink);font-weight:700}
+body.scrollmode nav.tabs{display:none}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px;margin:14px 0}
+body:not(.scrollmode) .sec[hidden]{display:none}
+body.scrollmode .sec{display:block !important}
 .ledger-label{font-family:"Shippori Mincho",serif;font-weight:600;font-size:12px;letter-spacing:.3em;
-  color:var(--sub);border-bottom:1px solid var(--line);padding-bottom:6px;margin:0 0 12px}
+ color:var(--sub);border-bottom:1px solid var(--line);padding-bottom:6px;margin:0 0 12px}
 .ledger-label b{color:var(--ink);font-size:15px;margin-left:8px;letter-spacing:.1em}
 /* 判定 */
-#hero{border:1.5px solid var(--ink)}
-.hero-grid{display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:center}
+#sec-judge{border:1.5px solid var(--ink)}
+.hero-grid{display:grid;grid-template-columns:140px 1fr;gap:16px;align-items:center}
 @media(max-width:640px){.hero-grid{grid-template-columns:1fr;justify-items:center;text-align:center}}
-.stamp{width:128px;height:128px;border-radius:50%;display:flex;flex-direction:column;justify-content:center;
-  align-items:center;font-family:"Shippori Mincho",serif;font-weight:800;transform:rotate(-6deg);
-  border:4px solid var(--shu);color:var(--shu);background:radial-gradient(circle,#fff 55%,transparent 70%)}
+.stamp{width:122px;height:122px;border-radius:50%;display:flex;flex-direction:column;justify-content:center;
+ align-items:center;font-family:"Shippori Mincho",serif;font-weight:800;transform:rotate(-6deg);
+ border:4px solid var(--shu);color:var(--shu);background:radial-gradient(circle,#fff 55%,transparent 70%)}
 .stamp.ok{border-color:var(--ai);color:var(--ai)}
-.stamp .big{font-size:30px;letter-spacing:.15em;line-height:1.1}
+.stamp .big{font-size:28px;letter-spacing:.15em;line-height:1.1}
 .stamp .sml{font-size:11px;letter-spacing:.2em;margin-top:2px}
 .slider-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
-.slider-row output{font-family:"Shippori Mincho",serif;font-size:34px;font-weight:800;min-width:110px}
-input[type=range]{flex:1;min-width:180px;accent-color:var(--shu)}
-.kpi{display:flex;gap:18px;flex-wrap:wrap}
-.kpi div{border-left:3px solid var(--line);padding-left:10px}
-.kpi .t{font-size:11px;color:var(--sub);letter-spacing:.08em}
-.kpi .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.slider-row output{font-family:"Shippori Mincho",serif;font-size:32px;font-weight:800;min-width:104px}
+input[type=range]{flex:1;min-width:170px;accent-color:var(--shu)}
+.kpi{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.kpi div{border-left:3px solid var(--line);padding-left:10px;min-width:118px}
+.kpi .t{font-size:10.5px;color:var(--sub);letter-spacing:.06em}
+.kpi .v{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
 .kpi .v.minus{color:var(--shu)} .kpi .v.plus{color:var(--ai)}
-.networth{margin-top:10px;font-size:12.5px;color:var(--sub)}
+.networth{margin-top:8px;font-size:12.5px;color:var(--sub)}
 .networth b{color:var(--ink);font-variant-numeric:tabular-nums}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;font-size:13px}
-th{font-weight:500;color:var(--sub);font-size:11.5px;letter-spacing:.06em}
+th{font-weight:500;color:var(--sub);font-size:11.5px}
 th:first-child,td:first-child{text-align:left}
 tr.now{background:#F0EBDD}
 /* 図 */
-.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:760px){.charts{grid-template-columns:1fr}}
-.chart-box{margin-bottom:0}
-.mini-toggle{display:inline-flex;gap:0;margin-left:auto}
+.chart-box{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px}
+.box-head{display:flex;align-items:center;gap:8px}
+.mini-toggle{display:inline-flex;margin-left:auto}
 .mini-toggle button{padding:2px 10px;font-size:11px;border-color:var(--line);color:var(--sub);border-radius:0}
 .mini-toggle button:first-child{border-radius:4px 0 0 4px}
 .mini-toggle button:last-child{border-radius:0 4px 4px 0}
 .mini-toggle button.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
-.box-head{display:flex;align-items:center;gap:8px}
-/* タブ */
-.tabs{display:flex;gap:0;flex-wrap:wrap;border-bottom:2px solid var(--ink);margin-bottom:0}
-.tabs button{border:1px solid var(--line);border-bottom:none;border-radius:6px 6px 0 0;background:#EDEAE0;
-  color:var(--sub);padding:9px 16px;font-size:13px;letter-spacing:.06em}
-.tabs button[aria-selected=true]{background:var(--card);color:var(--ink);font-weight:700;
-  border-color:var(--ink);position:relative;top:2px;border-bottom:2px solid var(--card)}
-.tabpanel{border:1px solid var(--ink);border-top:none;border-radius:0 0 6px 6px;background:var(--card);
-  padding:18px;margin-bottom:16px}
-.tabpanel[hidden]{display:none}
 /* フォーム */
-.fgroup{margin-bottom:16px}
+.fgroup{margin-bottom:14px}
 .fgroup h4{font-size:12px;letter-spacing:.2em;color:var(--sub);font-weight:700;margin:0 0 8px;
-  border-left:3px solid var(--ai);padding-left:8px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+ border-left:3px solid var(--ai);padding-left:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 label.f{display:block;font-size:11.5px;color:var(--sub)}
-label.f span{display:block;margin-bottom:3px;letter-spacing:.04em}
-input[type=number],input[type=text],select{width:100%;font:inherit;font-size:14px;padding:6px 8px;
-  border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);font-variant-numeric:tabular-nums}
+label.f span{display:block;margin-bottom:3px}
+input[type=number],input[type=text],select{width:100%;font:inherit;font-size:16px;padding:7px 8px;
+ border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--ink);font-variant-numeric:tabular-nums}
 input:focus,select:focus{border-color:var(--ai)}
 .hint{font-size:11px;color:var(--sub);margin-top:8px}
-.rows td input{max-width:104px}
-.rows td:first-child input{max-width:none;min-width:110px}
 td.chk,th.chk{text-align:center;width:32px}
-input[type=checkbox]{width:16px;height:16px;accent-color:var(--ai)}
-tr.off td{opacity:.42}
-button.mini{padding:2px 8px;font-size:11px;border-color:var(--line);color:var(--sub)}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--ai)}
+tr.off td{opacity:.45}
+button.mini{padding:3px 9px;font-size:11px;border-color:var(--line);color:var(--sub)}
 .addbtn{margin-top:10px}
 td.calc{color:var(--sub);font-size:12px;white-space:nowrap}
-details{margin-bottom:16px}
-details summary{cursor:pointer;font-size:13px;color:var(--sub);padding:8px 0}
 .scroll{overflow-x:auto}
-footer{font-size:11.5px;color:var(--sub);border-top:1px solid var(--line);padding-top:14px}
+footer{font-size:11.5px;color:var(--sub);border-top:1px solid var(--line);padding-top:14px;margin-top:16px}
 #savestat{font-size:11.5px;color:var(--sub)}
 body.pv .money,body.pv input[type=number],body.pv canvas{filter:blur(6px);user-select:none}
 @media (prefers-reduced-motion:no-preference){.stamp{transition:transform .3s}.stamp:hover{transform:rotate(0)}}
+/* ===== スマホ: 行テーブルをカード化 ===== */
+@media(max-width:680px){
+ .rows{display:block}
+ .rows thead{display:none}
+ .rows tbody{display:block}
+ .rows tr{display:flex;flex-wrap:wrap;gap:8px;position:relative;background:#fff;
+  border:1px solid var(--line);border-radius:8px;padding:12px 12px 12px 42px;margin-bottom:10px}
+ .rows td{display:block;border:none;padding:0;text-align:left;flex:1 1 44%;max-width:none}
+ .rows td input,.rows td select{max-width:none;width:100%}
+ .rows td[data-l]::before{content:attr(data-l);display:block;font-size:10px;color:var(--sub);margin-bottom:2px}
+ .rows td.chk{position:absolute;left:11px;top:16px;flex:none;width:auto;padding:0}
+ .rows td.namecell{flex:1 1 100%;padding-right:52px}
+ .rows td.span2{flex:1 1 100%}
+ .rows td.act{position:absolute;right:8px;top:10px;flex:none}
+ .rows tr.off{opacity:.55}
+ .rows tr.off td{opacity:1}
+ .kpi div{min-width:44%}
+}
+/* ===== レポート（PDF共有用） ===== */
+#report{position:fixed;inset:0;z-index:100;background:#EDEDEA;overflow:auto}
+#report .repbar{position:sticky;top:0;z-index:2;background:var(--ink);display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:10px 12px;flex-wrap:wrap}
+#report .repbar .repHint{color:#cfd6dd;font-size:11px;margin-right:auto}
+#report .repbar button{background:#fff}
+#report .sheet{max-width:780px;margin:14px auto;background:#fff;padding:26px 24px;color:#1d2833;font-size:12.5px;line-height:1.55;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.sheet h2{font-family:"Shippori Mincho",serif;font-size:22px;letter-spacing:.1em;margin:0 0 2px;border-bottom:3px double var(--ink);padding-bottom:8px}
+.sheet h2 span{font-size:12px;color:var(--sub);letter-spacing:.2em;margin-left:8px}
+.sheet .meta{font-size:11px;color:var(--sub);margin:6px 0 14px}
+.sheet h3{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:.12em;margin:18px 0 6px;border-left:4px solid var(--ai);padding-left:8px}
+.sheet table{width:100%;border-collapse:collapse;margin:4px 0 10px}
+.sheet th,.sheet td{border-bottom:1px solid #E2DED2;padding:4px 6px;font-size:11.5px;text-align:left}
+.sheet td.r,.sheet th.r{text-align:right}
+.sheet tr.ref td{color:#9a968a}
+.sheet img{width:100%;margin:8px 0;border:1px solid #eee;border-radius:4px}
+.sheet .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sheet .note{font-size:10.5px;color:var(--sub);margin-top:14px}
+.verdict{display:flex;gap:16px;align-items:center;border:1.5px solid var(--shu);border-radius:8px;padding:12px 14px;margin:8px 0 12px}
+.verdict.ok{border-color:var(--ai)}
+.verdict .vbig{font-family:"Shippori Mincho",serif;font-size:30px;font-weight:800;color:var(--shu)}
+.verdict.ok .vbig{color:var(--ai)}
+.verdict .vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 14px;flex:1}
+.verdict i{font-style:normal;font-size:10px;color:var(--sub);display:block}
+.verdict em{font-style:normal;font-weight:700;font-size:13.5px}
+@media(max-width:560px){.sheet .two{grid-template-columns:1fr}
+ .verdict{flex-direction:column;align-items:flex-start;gap:8px}.verdict .vgrid{grid-template-columns:repeat(2,1fr)}}
+@media print{
+ body.printing .wrap{display:none}
+ body.printing #report{position:static;overflow:visible;background:#fff}
+ .repbar{display:none!important}
+ #report .sheet{box-shadow:none;margin:0;max-width:none;padding:0}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-  <h1>人生設計簿<small>LIFE PLAN LEDGER</small></h1>
+  <h1>人生設計簿<small>LIFE PLAN LEDGER <span id="verTag"></span></small></h1>
   <div class="tools">
-    <button id="pvbtn" aria-pressed="false">金額を隠す</button>
-    <button id="expEnc">暗号化して書き出す</button>
-    <button id="expPlain">JSONで書き出す</button>
-    <button id="impBtn">読み込む</button>
+    <span class="seg" role="group" aria-label="表示切替">
+      <button id="modeTab" class="on">タブ</button><button id="modeScroll">縦一覧</button>
+    </span>
+    <button id="repBtn">レポート</button>
+    <button id="pvbtn" aria-pressed="false">隠す</button>
+    <details class="menu" id="menu"><summary>データ ▾</summary>
+      <div class="dd">
+        <button id="expEnc">暗号化して書き出す</button>
+        <button id="expPlain">JSONで書き出す</button>
+        <button id="impBtn">読み込む</button>
+        <button id="resetBtn" class="shu">初期化（サンプルに戻す）</button>
+      </div>
+    </details>
     <input type="file" id="impFile" accept=".json" hidden>
-    <button id="resetBtn" class="shu">初期化</button>
   </div>
 </header>
 
-<section id="hero">
+<nav class="tabs" id="tabs">
+  <button data-t="sec-judge" aria-selected="true">判定</button>
+  <button data-t="sec-charts" aria-selected="false">グラフ</button>
+  <button data-t="sec-basic" aria-selected="false">基本の数字</button>
+  <button data-t="sec-assets" aria-selected="false">資産と家族</button>
+  <button data-t="sec-loans" aria-selected="false">ローン</button>
+  <button data-t="sec-inc" aria-selected="false">収入の柱</button>
+  <button data-t="sec-goals" aria-selected="false">やりたいこと</button>
+  <button data-t="sec-years" aria-selected="false">年次明細</button>
+</nav>
+
+<section class="sec" id="sec-judge">
   <p class="ledger-label">判定 <b>この歳で辞められるか</b></p>
   <div class="hero-grid">
     <div id="stamp" class="stamp"><span class="big">—</span><span class="sml">計算中</span></div>
@@ -139,87 +217,105 @@ body.pv .money,body.pv input[type=number],body.pv canvas{filter:blur(6px);user-s
         <div><div class="t">その時の予測資産</div><div class="v money" id="kHave">—</div></div>
         <div><div class="t">過不足</div><div class="v money" id="kGap">—</div></div>
       </div>
+      <div class="kpi">
+        <div><div class="t">成功確率（利回りのブレ考慮）</div><div class="v" id="kProb">—</div></div>
+        <div><div class="t">資産が尽きる歳</div><div class="v" id="kDep">—</div></div>
+        <div><div class="t">初年度の取り崩し率</div><div class="v" id="kWdr">—</div></div>
+      </div>
       <div class="networth">現在の家計: 資産 <b class="money" id="nwA">—</b> − 負債 <b class="money" id="nwD">—</b> ＝ 純資産 <b class="money" id="nwN">—</b></div>
-      <p class="hint">必要資産＝リタイア後、給与外収入・年金と取り崩しで最終年齢まで資産が尽きないために、その年に持っていたい額（自動逆算・インフレ込み）。</p>
+      <p class="hint">必要資産＝リタイア後、給与外収入・年金と取り崩しで最終年齢まで資産が尽きないために、その年に持っていたい額（自動逆算・インフレ込み）。成功確率＝利回りを「リターンのブレσ」で毎年ランダムに揺らして400回試行し、最後まで資産が残った割合。取り崩し率は4%以下がひとつの目安。</p>
     </div>
   </div>
   <div class="scroll"><table id="quick"><thead><tr><th>リタイア年齢</th><th>予測資産</th><th>必要資産</th><th>判定</th></tr></thead><tbody></tbody></table></div>
 </section>
 
-<div class="charts">
-  <div class="chart-box"><p class="ledger-label">図一 <b>資産の等高線</b>（実線＝資産／点線＝負債を引いた純資産）</p><canvas id="ch1" height="220"></canvas></div>
-  <div class="chart-box"><p class="ledger-label">図二 <b>年間の出入り</b></p><canvas id="ch2" height="220"></canvas></div>
-  <div class="chart-box">
-    <div class="box-head"><p class="ledger-label" style="flex:1">図三 <b>いまの資産の内訳</b></p>
-      <span class="mini-toggle"><button id="pieOwner" class="on">人別</button><button id="pieType">種類別</button></span></div>
-    <canvas id="ch3" height="220"></canvas></div>
-  <div class="chart-box"><p class="ledger-label">図四 <b>ローンの返し方</b>（残高の推移）</p><canvas id="ch4" height="220"></canvas></div>
-</div>
+<section class="sec" id="sec-charts" hidden>
+  <div class="charts">
+    <div class="chart-box"><p class="ledger-label">図一 <b>資産の等高線</b>（実線＝資産／点線＝純資産）</p><canvas id="ch1" height="230"></canvas></div>
+    <div class="chart-box"><p class="ledger-label">図二 <b>年間の出入り</b></p><canvas id="ch2" height="230"></canvas></div>
+    <div class="chart-box">
+      <div class="box-head"><p class="ledger-label" style="flex:1">図三 <b>いまの資産の内訳</b></p>
+        <span class="mini-toggle"><button id="pieOwner" class="on">人別</button><button id="pieType">種類別</button></span></div>
+      <canvas id="ch3" height="230"></canvas></div>
+    <div class="chart-box"><p class="ledger-label">図四 <b>ローンの返し方</b>（残高の推移）</p><canvas id="ch4" height="230"></canvas></div>
+  </div>
+</section>
 
-<nav class="tabs" role="tablist" id="tabs">
-  <button role="tab" aria-selected="true" data-t="p1">基本の数字</button>
-  <button role="tab" aria-selected="false" data-t="p2">資産と家族</button>
-  <button role="tab" aria-selected="false" data-t="p3">ローン</button>
-  <button role="tab" aria-selected="false" data-t="p4">収入の柱</button>
-  <button role="tab" aria-selected="false" data-t="p5">やりたいこと</button>
-</nav>
-
-<div class="tabpanel" id="p1">
+<section class="sec" id="sec-basic" hidden>
+  <p class="ledger-label">第一帳 <b>基本の数字</b></p>
   <div id="basicArea"></div>
-  <p class="hint">単位は万円・今日の価値で入力（インフレ率で自動的に将来価格へ換算）。赴任中の年間貯蓄額＝保険・ローン・生活費まで全部差し引いた「純粋に増える額」（赴任期間中は他の収支を止めてこの値だけで計算）。給与は昇給率、生活費・教育費・目標・不動産/事業収入・年金はインフレ率で伸びます。</p>
-</div>
+  <p class="hint">単位は万円・今日の価値で入力（インフレ率で自動的に将来価格へ換算）。赴任中の年間貯蓄額＝保険・ローン・生活費まで全部差し引いた「純粋に増える額」。給与は昇給率、生活費・教育費・目標・不動産/事業収入・年金はインフレ率で伸びます。リターンのブレσは投資比率が高いほど大きめ（現金中心3%・バランス型8%・株式中心15%が目安）。</p>
+</section>
 
-<div class="tabpanel" id="p2" hidden>
+<section class="sec" id="sec-assets" hidden>
+  <p class="ledger-label">第二帳 <b>資産と家族</b></p>
   <div class="fgroup"><h4>資産（持ち主ごとに登録）</h4>
-    <div class="scroll"><table class="rows" id="astTbl"><thead><tr><th class="chk">有</th><th>名前</th><th>持ち主</th><th>種類</th><th>金額</th><th class="calc">円換算</th><th></th></tr></thead><tbody></tbody></table></div>
+    <table class="rows" id="astTbl"><thead><tr><th class="chk">有</th><th>名前</th><th>持ち主</th><th>種類</th><th>金額</th><th>円換算</th><th></th></tr></thead><tbody></tbody></table>
     <button class="addbtn" id="addAst">＋ 資産を足す</button>
-    <p class="hint">種類が「外貨($)」の行はドルで入力（第一帳の為替で換算）。「有」を外すと参考表示だけになり計算から除外（例: 解約しない保険積立）。</p>
+    <p class="hint">「外貨($)」はドルで入力（第一帳の為替で換算）。「有」を外すと参考表示だけになり計算から除外（例: 解約しない保険積立）。</p>
   </div>
   <div class="fgroup"><h4>子どもと教育費（18〜21歳で大学費用を4分割・インフレ込み）</h4>
-    <div class="scroll"><table class="rows" id="kidTbl"><thead><tr><th class="chk">有</th><th>呼び名</th><th>生まれ年</th><th>大学費用(万)</th><th></th></tr></thead><tbody></tbody></table></div>
+    <table class="rows" id="kidTbl"><thead><tr><th class="chk">有</th><th>呼び名</th><th>生まれ年</th><th>大学費用(万)</th><th></th></tr></thead><tbody></tbody></table>
     <button class="addbtn" id="addKid">＋ 子どもを足す</button>
   </div>
-</div>
+</section>
 
-<div class="tabpanel" id="p3" hidden>
-  <div class="scroll"><table class="rows" id="loanTbl"><thead><tr><th class="chk">有</th><th>名前</th><th>残高(万)</th><th>月返済(万)</th><th>金利(%)</th><th class="calc">完済予定</th><th></th></tr></thead><tbody></tbody></table></div>
+<section class="sec" id="sec-loans" hidden>
+  <p class="ledger-label">第三帳 <b>ローン</b></p>
+  <table class="rows" id="loanTbl"><thead><tr><th class="chk">有</th><th>名前</th><th>残高(万)</th><th>月返済(万)</th><th>金利(%)</th><th>完済予定</th><th></th></tr></thead><tbody></tbody></table>
   <button class="addbtn" id="addLoan">＋ ローンを足す</button>
   <p class="hint">住宅・車・奨学金など何本でも。完済予定は自動計算。月返済が利息を下回ると「返済不足」と表示されます。</p>
-</div>
+</section>
 
-<div class="tabpanel" id="p4" hidden>
-  <div class="scroll"><table class="rows" id="incTbl"><thead><tr><th class="chk">有</th><th>名前</th><th>開始年</th><th>年額(万)</th><th></th></tr></thead><tbody></tbody></table></div>
+<section class="sec" id="sec-inc" hidden>
+  <p class="ledger-label">第四帳 <b>収入の柱</b></p>
+  <table class="rows" id="incTbl"><thead><tr><th class="chk">有</th><th>名前</th><th>開始年</th><th>年額(万)</th><th></th></tr></thead><tbody></tbody></table>
   <button class="addbtn" id="addInc">＋ 収入の柱を足す</button>
   <p class="hint">リタイア後も続く収入（不動産・事業・botなど）。今日の価値で入力、インフレ率で伸びます。公的年金は第一帳で設定。</p>
-</div>
+</section>
 
-<div class="tabpanel" id="p5" hidden>
-  <div class="scroll"><table class="rows" id="goalTbl"><thead><tr><th class="chk">✓</th><th>やりたいこと</th><th>形</th><th>年 / 期間</th><th>金額(万)</th><th></th></tr></thead><tbody></tbody></table></div>
+<section class="sec" id="sec-goals" hidden>
+  <p class="ledger-label">第五帳 <b>やりたいこと</b></p>
+  <table class="rows" id="goalTbl"><thead><tr><th class="chk">✓</th><th>やりたいこと</th><th>形</th><th>年 / 期間</th><th>金額(万)</th><th></th></tr></thead><tbody></tbody></table>
   <button class="addbtn" id="addGoal">＋ やりたいことを足す</button>
   <p class="hint">✓を外すと計算から除外。金額は今日の価値。</p>
-</div>
+</section>
 
-<details><summary>年次明細を開く（年ごとの収支・資産・出来事）</summary>
+<section class="sec" id="sec-years" hidden>
+  <p class="ledger-label">附録 <b>年次明細</b></p>
   <div class="scroll"><table id="yearTbl"><thead><tr><th>年</th><th>歳</th><th>年間収支</th><th>年末資産</th><th>純資産</th><th>主な出来事</th></tr></thead><tbody></tbody></table></div>
-</details>
+</section>
 
 <footer>
+  <div id="verLine" style="font-weight:700;color:var(--ink);font-size:12px"></div>
   <div id="savestat">—</div>
-  <p>このツールはすべてブラウザ内だけで動きます。入力した数字がサーバーに送られることはありません。自動保存はこの端末のブラウザ（localStorage）のみ。バックアップは「暗号化して書き出す」を使い、書き出したファイルはリポジトリにコミットしないでください。試算は簡易モデルであり、将来を保証するものではありません。</p>
+  <p>このツールはすべてブラウザ内だけで動きます。入力した数字がサーバーに送られることはありません。自動保存はこの端末のブラウザ（localStorage）のみ。バックアップは「データ ▾ → 暗号化して書き出す」を使い、書き出したファイルはリポジトリにコミットしないでください。試算は簡易モデルであり、将来を保証するものではありません。</p>
 </footer>
+</div>
+
+<div id="report" hidden>
+  <div class="repbar">
+    <span class="repHint">「PDFとして保存 / 印刷」→ 印刷画面の共有やオプションからPDF保存できます</span>
+    <button id="repPrint">PDFとして保存 / 印刷</button>
+    <button id="repClose">閉じる</button>
+  </div>
+  <div class="sheet" id="repBody"></div>
 </div>
 
 <script>
 "use strict";
 const K="lifeplan_v1", Y0=new Date().getFullYear();
+/* ▼ 更新のたびにここを書き換える ▼ */
+const APP_VER="3.2", APP_UPDATED="2026年8月15日";
 const uid=()=>Math.random().toString(36).slice(2,9);
 const OWNERS=["私","妻","子ども","共有"];
 const TYPES={cash:"現金・預金",fx:"外貨($)",inv:"投資",ins:"保険積立",oth:"その他"};
+const $=id=>document.getElementById(id);
 
-/* ---------- 初期データ（サンプル値。実データはブラウザ上で入力） ---------- */
-const DEF=()=>({v:2, retireAge:45,
+/* ---------- 初期データ（サンプル値） ---------- */
+const DEF=()=>({v:2, retireAge:45, ui:{mode:"tab",tab:"sec-judge",pie:"owner"},
  basic:{curAge:35,endAge:90,netIncome:550,raise:0,living:380,retireLiving:420,
-  pension:220,pensionAge:65,ret:2,infl:1,fx:155,insAnnual:0,insEnd:65,propInc:0,
+  pension:220,pensionAge:65,ret:2,vol:8,infl:1,fx:155,insAnnual:0,insEnd:65,propInc:0,
   asgStart:0,asgYears:0,asgSave:0},
  assets:[{id:uid(),on:true,name:"普通預金",owner:"共有",type:"cash",amt:500}],
  loans:[{id:uid(),on:true,name:"住宅ローン",balance:2000,monthly:7,rate:0.7}],
@@ -228,9 +324,16 @@ const DEF=()=>({v:2, retireAge:45,
  goals:[{id:uid(),on:true,name:"家族旅行",type:"once",year:Y0+1,start:0,end:0,cost:60},
         {id:uid(),on:true,name:"習いごと",type:"annual",year:0,start:Y0,end:Y0+15,cost:40}]});
 
-/* v1データ（旧形式）を自動移行 */
+function normalize(s){
+ const d=DEF();
+ s.basic={...d.basic,...(s.basic||{})};
+ s.ui={...d.ui,...(s.ui||{})};
+ for(const k of ["assets","loans","incomes","kids","goals"]) s[k]=Array.isArray(s[k])?s[k]:d[k];
+ s.retireAge=s.retireAge??45; s.v=2; return s;
+}
 function migrate(s){
- if(!s)return DEF(); if(s.v===2)return s;
+ if(!s)return DEF();
+ if(s.v===2)return normalize(s);
  const b=s.basic||{}, n=DEF();
  n.retireAge=s.retireAge??45;
  Object.assign(n.basic,{curAge:b.curAge??35,endAge:b.endAge??90,netIncome:b.netIncome??550,
@@ -244,13 +347,13 @@ function migrate(s){
  if(b.loanM)n.loans.push({id:uid(),on:true,name:"住宅ローン",balance:Math.round(b.loanM*12*Math.max(1,(b.loanEnd??Y0+20)-Y0+1)),monthly:b.loanM,rate:0});
  if(b.carBal)n.loans.push({id:uid(),on:true,name:"車ローン",balance:b.carBal,monthly:b.carM??10,rate:0});
  if(s.incomes)n.incomes=s.incomes; if(s.kids)n.kids=s.kids; if(s.goals)n.goals=s.goals;
- return n;
+ return normalize(n);
 }
 
 const BASIC_GROUPS=[
  ["わたしの働き",[["curAge","現在の年齢",1],["netIncome","手取り年収(万)",10],["raise","昇給率(%/年)",0.5],["living","生活費 年(万)",10]]],
  ["リタイア後と年金",[["retireLiving","リタイア後の生活費 年(万)",10],["pension","公的年金 年(万・夫婦)",10],["pensionAge","年金の開始年齢",1],["endAge","計算の最終年齢",1]]],
- ["経済の前提",[["ret","運用利回り(%)",0.5],["infl","インフレ率(%)",0.5],["fx","為替(円/$)",1]]],
+ ["経済の前提",[["ret","運用利回り(%)",0.5],["vol","リターンのブレσ(%)",1],["infl","インフレ率(%)",0.5],["fx","為替(円/$)",1]]],
  ["保険と不動産",[["insAnnual","保険料 年(万)",5],["insEnd","保険は何歳まで",1],["propInc","不動産収入 年(万)",10]]],
  ["海外赴任",[["asgStart","開始年(0=なし)",1],["asgYears","年数",1],["asgSave","赴任中の年間貯蓄(万)",50]]]];
 
@@ -260,35 +363,36 @@ function load(){try{const j=localStorage.getItem(K);S=migrate(j?JSON.parse(j):nu
  catch(e){storeOK=false;S=DEF();}}
 function save(){try{localStorage.setItem(K,JSON.stringify(S));
   stat(`自動保存済み（この端末のみ）: ${new Date().toLocaleTimeString("ja-JP")}`);}
- catch(e){storeOK=false;stat("この環境では自動保存できません（GitHub Pages上では有効）。書き出しでバックアップを。");}}
-const stat=t=>document.getElementById("savestat").textContent=t;
+ catch(e){storeOK=false;stat("この環境では自動保存できません（GitHub Pages上では有効）。データ ▾ から書き出しを。");}}
+const stat=t=>$("savestat").textContent=t;
 
-/* ---------- ローン返済スケジュール ---------- */
+/* ---------- ローンと資産 ---------- */
 function loanPlan(){
- const pay={},bal={},per=[];
+ const pay={},bal={},per=[]; let maxY=Y0+2;
  for(const L of S.loans){
   const row={name:L.name,bals:{},done:"—"};
   if(L.on){
-   let b=+L.balance||0, y=Y0;
-   for(;y<Y0+61&&b>0.5;y++){
+   let b=+L.balance||0;
+   for(let y=Y0;y<Y0+61&&b>0.5;y++){
     const interest=b*(+L.rate||0)/100, p=Math.min(b+interest,(+L.monthly||0)*12);
     if(p<=interest){row.done="返済不足";b=-1;break;}
     b=b+interest-p; pay[y]=(pay[y]||0)+p;
     row.bals[y]=Math.max(0,b); bal[y]=(bal[y]||0)+Math.max(0,b);
-    if(b<=0.5){row.done=y+"年";break;}
+    if(b<=0.5){row.done=y+"年";maxY=Math.max(maxY,y);break;}
+    maxY=Math.max(maxY,y);
    }
    if(row.done==="—")row.done=">60年";
   }
   per.push(row);
  }
- return{pay,bal,per};
+ return{pay,bal,per,maxY};
 }
 const debtNow=()=>S.loans.filter(l=>l.on).reduce((a,l)=>a+(+l.balance||0),0);
 const astYen=a=>a.type==="fx"?(+a.amt||0)*(+S.basic.fx||0)/10000:(+a.amt||0);
 const assetsNow=()=>S.assets.filter(a=>a.on).reduce((a,x)=>a+astYen(x),0);
 
 /* ---------- シミュレーション ---------- */
-function simFrom(startYear,startBal,retAge,LP){
+function simFrom(startYear,startBal,retAge,LP,retFn){
  const b=S.basic, retY=Y0+(retAge-b.curAge); let bal=startBal, min=Infinity; const rows=[];
  for(let y=startYear;;y++){
   const age=b.curAge+(y-Y0); if(age>b.endAge)break;
@@ -310,7 +414,8 @@ function simFrom(startYear,startBal,retAge,LP){
   for(const k of S.kids)if(k.on&&+k.birth){const a=y-k.birth;
    if(a>=18&&a<=21){cf-=((+k.uni||0)/4)*F; if(a===18)ev.push(k.name+" 大学へ");}}
   if(y===retY)ev.unshift("★リタイア");
-  bal=bal*(1+(+b.ret||0)/100)+cf;
+  const r=retFn?retFn():(+b.ret||0);
+  bal=bal*(1+r/100)+cf;
   rows.push({y,age,cf,bal,ev});
   if(y>=retY)min=Math.min(min,bal);
  }
@@ -324,73 +429,97 @@ function neededAt(retAge,LP){
  for(let i=0;i<50;i++){const m=(lo+hi)/2; ok(m)?hi=m:lo=m;} return hi;
 }
 const balAtRet=s=>{const r=s.rows.find(r=>r.y===s.retY-1);return r?r.bal:assetsNow();};
+/* モンテカルロ: 利回りを毎年ランダムに揺らして成功率を出す */
+let gauss=null;
+function randn(){ if(gauss!==null){const g=gauss;gauss=null;return g;}
+ const u=Math.random()||1e-9,v=Math.random();
+ const m=Math.sqrt(-2*Math.log(u)); gauss=m*Math.sin(2*Math.PI*v); return m*Math.cos(2*Math.PI*v);}
+function mcProb(retAge,LP,trials=400){
+ const b=S.basic; if(!(+b.vol>0))return null;
+ let okc=0;
+ for(let i=0;i<trials;i++){
+  const fn=()=>(+b.ret||0)+randn()*(+b.vol);
+  if(simFrom(Y0,assetsNow(),retAge,LP,fn).min>=0)okc++;
+ }
+ return Math.round(okc/trials*100);
+}
 
 /* ---------- 表示 ---------- */
 const fmt=v=>{if(v==null)return"—";const s=v<0?"−":"";const a=Math.abs(v);
  return a>=10000? s+(a/10000).toFixed(2)+"億円" : s+Math.round(a).toLocaleString("ja-JP")+"万円";};
-let ch1,ch2,ch3,ch4,pieMode="owner";
+let ch1,ch2,ch3,ch4;
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+Chart.defaults.animation=false;
 
 function judge(){
  const LP=loanPlan(), ra=S.retireAge, sim=fullSim(ra,LP), need=neededAt(ra,LP),
        have=balAtRet(sim), gap=have-(need??0);
- document.getElementById("retOut").textContent=ra+"歳";
- document.getElementById("kNeed").textContent=fmt(need);
- document.getElementById("kHave").textContent=fmt(have);
- const g=document.getElementById("kGap"); g.textContent=(gap>=0?"+":"")+fmt(gap);
+ $("retOut").textContent=ra+"歳";
+ $("kNeed").textContent=fmt(need); $("kHave").textContent=fmt(have);
+ const g=$("kGap"); g.textContent=(gap>=0?"+":"")+fmt(gap);
  g.className="v money "+(gap>=0?"plus":"minus");
- const A=assetsNow(),D=debtNow();
- document.getElementById("nwA").textContent=fmt(A);
- document.getElementById("nwD").textContent=fmt(D);
- document.getElementById("nwN").textContent=fmt(A-D);
- const ok=gap>=0&&sim.min>=0, st=document.getElementById("stamp");
+ const ok=gap>=0&&sim.min>=0, st=$("stamp");
  st.className="stamp"+(ok?" ok":"");
  st.innerHTML=`<span class="big">${ok?"達成":"不足"}</span><span class="sml">${ra}歳 引退案</span>`;
+ // 追加KPI
+ const p=mcProb(ra,LP); const pe=$("kProb");
+ pe.textContent=p==null?"—":p+"%";
+ pe.className="v "+(p==null?"":p>=80?"plus":p<50?"minus":"");
+ const dep=sim.rows.find(r=>r.y>=sim.retY&&r.bal<0);
+ const de=$("kDep"); de.textContent=dep?dep.age+"歳":"尽きない";
+ de.className="v "+(dep?"minus":"plus");
+ const r0=sim.rows.find(r=>r.y===sim.retY);
+ let wt="—";
+ if(r0&&have>0){wt=r0.cf<0?(Math.abs(r0.cf)/have*100).toFixed(1)+"%":"取り崩しなし";}
+ $("kWdr").textContent=wt;
+ const A=assetsNow(),D=debtNow();
+ $("nwA").textContent=fmt(A); $("nwD").textContent=fmt(D); $("nwN").textContent=fmt(A-D);
+ // 早見表
  const tb=document.querySelector("#quick tbody"); tb.innerHTML="";
  for(const a of [40,45,50,55,60]){
+  if(a<=S.basic.curAge){tb.insertAdjacentHTML("beforeend",`<tr><td>${a}歳</td><td>—</td><td>—</td><td>—</td></tr>`);continue;}
   const s2=fullSim(a,LP), n2=neededAt(a,LP), h2=balAtRet(s2), ok2=h2-(n2??0)>=0&&s2.min>=0;
   tb.insertAdjacentHTML("beforeend",
    `<tr class="${a===ra?"now":""}"><td>${a}歳</td><td class="money">${fmt(h2)}</td>
     <td class="money">${fmt(n2)}</td><td style="color:${ok2?"var(--ai)":"var(--shu)"};font-weight:700">${ok2?"◎ 可":"△ "+fmt((n2??0)-h2)+"不足"}</td></tr>`);}
- drawCharts(sim,LP); renderYears(sim,LP); renderLoanCalc(LP);
+ drawCharts(sim,LP); renderYears(sim,LP); renderCalcCells(LP);
 }
 function drawCharts(sim,LP){
  const L=sim.rows.map(r=>r.age+"歳"), retIdx=sim.rows.findIndex(r=>r.y>=sim.retY);
  [ch1,ch2,ch3,ch4].forEach(c=>c&&c.destroy());
  const nw=sim.rows.map(r=>r.bal-(LP.bal[r.y]||0));
- ch1=new Chart(document.getElementById("ch1"),{type:"line",
+ ch1=new Chart($("ch1"),{type:"line",
   data:{labels:L,datasets:[
-   {data:sim.rows.map(r=>r.bal),borderWidth:2,pointRadius:0,
+   {data:sim.rows.map(r=>r.bal),borderWidth:2,pointRadius:0,label:"資産",
     fill:{target:"origin",above:"rgba(43,91,126,.07)",below:"rgba(199,62,58,.12)"},
-    segment:{borderColor:c=>c.p0DataIndex>=retIdx-1?css("--shu"):css("--ai")},label:"資産"},
+    segment:{borderColor:c=>c.p0DataIndex>=retIdx-1?css("--shu"):css("--ai")}},
    {data:nw,borderWidth:1.5,pointRadius:0,borderDash:[5,4],borderColor:css("--nezu"),label:"純資産"}]},
   options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+": "+fmt(c.parsed.y)}}},
    scales:{y:{ticks:{callback:v=>Math.abs(v)>=10000?(v/10000)+"億":v.toLocaleString()},
     grid:{color:c=>c.tick.value===0?css("--ink"):"#E8E3D6",lineWidth:c=>c.tick.value===0?1.5:1}},
     x:{ticks:{maxTicksLimit:10},grid:{display:false}}}}});
- ch2=new Chart(document.getElementById("ch2"),{type:"bar",
+ ch2=new Chart($("ch2"),{type:"bar",
   data:{labels:L,datasets:[{data:sim.rows.map(r=>r.cf),
    backgroundColor:sim.rows.map(r=>r.cf>=0?"rgba(78,138,99,.75)":"rgba(199,62,58,.65)")}]},
   options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},
    scales:{y:{ticks:{callback:v=>v.toLocaleString()}},x:{ticks:{maxTicksLimit:10},grid:{display:false}}}}});
- // 図三 内訳
  const groups={};
- for(const a of S.assets){const k=pieMode==="owner"?a.owner:(TYPES[a.type]||a.type);
+ for(const a of S.assets){const k=S.ui.pie==="owner"?a.owner:(TYPES[a.type]||a.type);
   groups[k]=(groups[k]||0)+astYen(a);}
  const keys=Object.keys(groups).filter(k=>groups[k]>0);
+ const total=keys.reduce((a,k)=>a+groups[k],0)||1;
  const pal=[css("--ai"),css("--shu"),css("--take"),css("--yama"),css("--nezu"),"#7A5C8E"];
- ch3=new Chart(document.getElementById("ch3"),{type:"doughnut",
-  data:{labels:keys,datasets:[{data:keys.map(k=>groups[k]),backgroundColor:keys.map((k,i)=>pal[i%pal.length]),borderColor:css("--card"),borderWidth:2}]},
+ ch3=new Chart($("ch3"),{type:"doughnut",
+  data:{labels:keys,datasets:[{data:keys.map(k=>groups[k]),backgroundColor:keys.map((k,i)=>pal[i%pal.length]),borderColor:"#fff",borderWidth:2}]},
   options:{plugins:{legend:{position:"right",labels:{boxWidth:12,font:{size:11}}},
-   tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.parsed)}（${(c.parsed/keys.reduce((a,k2)=>a+groups[k2] ,0)*100).toFixed(0)}%）`}}}}});
- // 図四 ローン
- const yrs=[]; for(let y=Y0;y<=Y0+40;y++){if(LP.bal[y]||y<Y0+3)yrs.push(y);}
- ch4=new Chart(document.getElementById("ch4"),{type:"line",
-  data:{labels:yrs,datasets:LP.per.map((p,i)=>({label:p.name,data:yrs.map(y=>p.bals[y]??(y===Y0?null:0)),
-   borderColor:pal[i%pal.length],backgroundColor:pal[i%pal.length]+"33",fill:true,pointRadius:0,borderWidth:1.5}))},
+   tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.parsed)}（${(c.parsed/total*100).toFixed(0)}%）`}}}}});
+ const yrs=[]; for(let y=Y0;y<=LP.maxY+1;y++)yrs.push(y);
+ ch4=new Chart($("ch4"),{type:"bar",
+  data:{labels:yrs,datasets:LP.per.map((p,i)=>({label:p.name,data:yrs.map(y=>p.bals[y]??0),
+   backgroundColor:pal[i%pal.length]+"CC",stack:"s"}))},
   options:{plugins:{legend:{position:"bottom",labels:{boxWidth:12,font:{size:11}}},
    tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}},
-   scales:{y:{stacked:true,ticks:{callback:v=>v.toLocaleString()}},x:{ticks:{maxTicksLimit:9},grid:{display:false}}}}});
+   scales:{y:{stacked:true,ticks:{callback:v=>v.toLocaleString()}},x:{stacked:true,ticks:{maxTicksLimit:9},grid:{display:false}}}}});
 }
 function renderYears(sim,LP){
  const tb=document.querySelector("#yearTbl tbody"); tb.innerHTML="";
@@ -403,75 +532,92 @@ function renderYears(sim,LP){
 
 /* ---------- フォーム描画 ---------- */
 function renderBasic(){
- const area=document.getElementById("basicArea"); area.innerHTML="";
+ const area=$("basicArea"); area.innerHTML="";
  for(const [title,fields] of BASIC_GROUPS){
   const div=document.createElement("div"); div.className="fgroup";
   div.innerHTML=`<h4>${title}</h4><div class="grid">${fields.map(([k,label,step])=>
-   `<label class="f"><span>${label}</span><input type="number" step="${step}" data-k="${k}" value="${S.basic[k]}"></label>`).join("")}</div>`;
+   `<label class="f"><span>${label}</span><input type="number" inputmode="decimal" step="${step}" data-k="${k}" value="${S.basic[k]}"></label>`).join("")}</div>`;
   area.appendChild(div);}
  area.querySelectorAll("input").forEach(el=>el.addEventListener("change",()=>{
-  S.basic[el.dataset.k]=parseFloat(el.value)||0; update();}));
+  S.basic[el.dataset.k]=parseFloat(el.value)||0; update(false);}));
 }
-function rowTable(id,arr,make){
+function rowTable(id,arr,make,structuralFields){
  const tb=document.querySelector(`#${id} tbody`); tb.innerHTML="";
  for(const it of arr){
   const tr=document.createElement("tr"); tr.className=it.on?"":"off"; tr.innerHTML=make(it);
   tr.querySelectorAll("[data-f]").forEach(el=>el.addEventListener("change",()=>{
    const f=el.dataset.f;
    it[f]=el.type==="checkbox"?el.checked:(el.type==="number"?parseFloat(el.value)||0:el.value);
-   update();}));
-  tr.querySelector(".del").addEventListener("click",()=>{arr.splice(arr.indexOf(it),1);update();});
+   tr.className=it.on?"":"off";
+   update(structuralFields&&structuralFields.includes(f));}));
+  tr.querySelector(".del").addEventListener("click",()=>{arr.splice(arr.indexOf(it),1);update(true);});
   tb.appendChild(tr);}
 }
+const num=(f,v,extra="")=>`<input type="number" inputmode="decimal" ${extra} data-f="${f}" value="${v}">`;
 function renderRows(){
  rowTable("astTbl",S.assets,a=>`
   <td class="chk"><input type="checkbox" data-f="on" ${a.on?"checked":""}></td>
-  <td><input type="text" data-f="name" value="${a.name}"></td>
-  <td><select data-f="owner">${OWNERS.map(o=>`<option ${a.owner===o?"selected":""}>${o}</option>`).join("")}</select></td>
-  <td><select data-f="type">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}" ${a.type===k?"selected":""}>${v}</option>`).join("")}</select></td>
-  <td><input type="number" data-f="amt" value="${a.amt}"></td>
-  <td class="calc money">${fmt(astYen(a))}</td>
-  <td><button class="mini del">消す</button></td>`);
+  <td class="namecell" data-l="名前"><input type="text" data-f="name" value="${a.name}"></td>
+  <td data-l="持ち主"><select data-f="owner">${OWNERS.map(o=>`<option ${a.owner===o?"selected":""}>${o}</option>`).join("")}</select></td>
+  <td data-l="種類"><select data-f="type">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}" ${a.type===k?"selected":""}>${v}</option>`).join("")}</select></td>
+  <td data-l="金額（外貨は$）">${num("amt",a.amt)}</td>
+  <td class="calc money" data-l="円換算" data-yen="${a.id}">${fmt(astYen(a))}</td>
+  <td class="act"><button class="mini del">消す</button></td>`);
  rowTable("loanTbl",S.loans,l=>`
   <td class="chk"><input type="checkbox" data-f="on" ${l.on?"checked":""}></td>
-  <td><input type="text" data-f="name" value="${l.name}"></td>
-  <td><input type="number" data-f="balance" value="${l.balance}"></td>
-  <td><input type="number" step="0.5" data-f="monthly" value="${l.monthly}"></td>
-  <td><input type="number" step="0.1" data-f="rate" value="${l.rate}"></td>
-  <td class="calc" data-done="${l.id}">—</td>
-  <td><button class="mini del">消す</button></td>`);
+  <td class="namecell" data-l="名前"><input type="text" data-f="name" value="${l.name}"></td>
+  <td data-l="残高(万)">${num("balance",l.balance)}</td>
+  <td data-l="月返済(万)">${num("monthly",l.monthly,'step="0.5"')}</td>
+  <td data-l="金利(%)">${num("rate",l.rate,'step="0.1"')}</td>
+  <td class="calc" data-l="完済予定" data-done="${l.id}">—</td>
+  <td class="act"><button class="mini del">消す</button></td>`);
  rowTable("kidTbl",S.kids,k=>`
   <td class="chk"><input type="checkbox" data-f="on" ${k.on?"checked":""}></td>
-  <td><input type="text" data-f="name" value="${k.name}"></td>
-  <td><input type="number" data-f="birth" value="${k.birth}"></td>
-  <td><input type="number" data-f="uni" value="${k.uni}"></td>
-  <td><button class="mini del">消す</button></td>`);
+  <td class="namecell" data-l="呼び名"><input type="text" data-f="name" value="${k.name}"></td>
+  <td data-l="生まれ年">${num("birth",k.birth)}</td>
+  <td data-l="大学費用(万)">${num("uni",k.uni)}</td>
+  <td class="act"><button class="mini del">消す</button></td>`);
  rowTable("incTbl",S.incomes,i=>`
   <td class="chk"><input type="checkbox" data-f="on" ${i.on?"checked":""}></td>
-  <td><input type="text" data-f="name" value="${i.name}"></td>
-  <td><input type="number" data-f="start" value="${i.start}"></td>
-  <td><input type="number" data-f="annual" value="${i.annual}"></td>
-  <td><button class="mini del">消す</button></td>`);
+  <td class="namecell" data-l="名前"><input type="text" data-f="name" value="${i.name}"></td>
+  <td data-l="開始年">${num("start",i.start)}</td>
+  <td data-l="年額(万)">${num("annual",i.annual)}</td>
+  <td class="act"><button class="mini del">消す</button></td>`);
  rowTable("goalTbl",S.goals,g=>`
   <td class="chk"><input type="checkbox" data-f="on" ${g.on?"checked":""}></td>
-  <td><input type="text" data-f="name" value="${g.name}"></td>
-  <td><select data-f="type"><option value="once" ${g.type==="once"?"selected":""}>単発</option>
+  <td class="namecell" data-l="やりたいこと"><input type="text" data-f="name" value="${g.name}"></td>
+  <td data-l="形"><select data-f="type"><option value="once" ${g.type==="once"?"selected":""}>単発</option>
       <option value="annual" ${g.type==="annual"?"selected":""}>毎年</option></select></td>
-  <td>${g.type==="once"
-    ?`<input type="number" data-f="year" value="${g.year}">`
-    :`<input type="number" data-f="start" value="${g.start}" style="max-width:76px"> 〜 <input type="number" data-f="end" value="${g.end}" style="max-width:76px">`}</td>
-  <td><input type="number" data-f="cost" value="${g.cost}"></td>
-  <td><button class="mini del">消す</button></td>`);
+  <td class="span2" data-l="年 / 期間">${g.type==="once"
+    ?num("year",g.year)
+    :num("start",g.start,'style="max-width:76px"')+" 〜 "+num("end",g.end,'style="max-width:76px"')}</td>
+  <td data-l="金額(万)">${num("cost",g.cost)}</td>
+  <td class="act"><button class="mini del">消す</button></td>`,["type"]);
 }
-function renderLoanCalc(LP){
- S.loans.forEach((l,i)=>{const td=document.querySelector(`[data-done="${l.id}"]`);
-  if(td)td.textContent=l.on?LP.per[i].done:"—";});
+function renderCalcCells(LP){
+ S.assets.forEach(a=>{const td=document.querySelector(`[data-yen="${a.id}"]`); if(td)td.textContent=fmt(astYen(a));});
+ S.loans.forEach((l,i)=>{const td=document.querySelector(`[data-done="${l.id}"]`); if(td)td.textContent=l.on?LP.per[i].done:"—";});
 }
-function update(){save();renderRows();judge();}
-function renderAll(){renderBasic();renderRows();
- document.getElementById("retAge").value=S.retireAge;judge();}
+function update(structural){save(); if(structural)renderRows(); judge();}
 
-/* ---------- 書き出し・読み込み（暗号化対応） ---------- */
+/* ---------- タブと表示モード ---------- */
+function applyMode(){
+ document.body.classList.toggle("scrollmode",S.ui.mode==="scroll");
+ $("modeTab").classList.toggle("on",S.ui.mode==="tab");
+ $("modeScroll").classList.toggle("on",S.ui.mode==="scroll");
+ if(S.ui.mode==="tab")selectTab(S.ui.tab||"sec-judge",false);
+ else document.querySelectorAll(".sec").forEach(s=>s.hidden=false);
+ requestAnimationFrame(judge);
+}
+function selectTab(id,redraw=true){
+ S.ui.tab=id;
+ document.querySelectorAll("#tabs [data-t]").forEach(b=>b.setAttribute("aria-selected",b.dataset.t===id));
+ document.querySelectorAll(".sec").forEach(s=>s.hidden=s.id!==id);
+ if(redraw){save();requestAnimationFrame(judge);}
+}
+function renderAll(){renderBasic();renderRows();$("retAge").value=S.retireAge;applyMode();}
+
+/* ---------- 書き出し・読み込み ---------- */
 const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
 const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function keyFrom(pass,salt){
@@ -489,40 +635,105 @@ async function exportEnc(){
  dl(`lifeplan-${Y0}.enc.json`,JSON.stringify({enc:true,salt:b64(salt),iv:b64(iv),data:b64(data)}));
  stat("暗号化バックアップを書き出しました。このファイルはコミットしないでください。");}
 async function importAny(file){
- const j=JSON.parse(await file.text());
- if(j.enc){const pass=prompt("このバックアップのパスワード");if(pass==null)return;
-  try{const key=await keyFrom(pass,unb64(j.salt));
-   const raw=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(j.iv)},key,unb64(j.data));
-   S=migrate(JSON.parse(new TextDecoder().decode(raw)));}
-  catch(e){alert("パスワードが違うか、ファイルが壊れています。");return;}}
- else S=migrate(j);
- save();renderAll();stat("読み込みました。");}
+ try{
+  const j=JSON.parse(await file.text());
+  if(j.enc){const pass=prompt("このバックアップのパスワード");if(pass==null)return;
+   try{const key=await keyFrom(pass,unb64(j.salt));
+    const raw=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(j.iv)},key,unb64(j.data));
+    S=migrate(JSON.parse(new TextDecoder().decode(raw)));}
+   catch(e){alert("パスワードが違うか、ファイルが壊れています。");return;}}
+  else S=migrate(j);
+  save();renderAll();stat("読み込みました。");
+ }catch(e){alert("JSONファイルとして読み取れませんでした。");}
+}
 
 /* ---------- イベント ---------- */
 load();
-document.getElementById("tabs").addEventListener("click",e=>{
- const b=e.target.closest("[data-t]"); if(!b)return;
- document.querySelectorAll("#tabs [role=tab]").forEach(t=>t.setAttribute("aria-selected",t===b));
- document.querySelectorAll(".tabpanel").forEach(p=>p.hidden=p.id!==b.dataset.t);});
-document.getElementById("retAge").addEventListener("input",e=>{S.retireAge=+e.target.value;save();judge();});
-document.getElementById("pieOwner").onclick=e=>{pieMode="owner";togglePie(e.target);};
-document.getElementById("pieType").onclick=e=>{pieMode="type";togglePie(e.target);};
-function togglePie(btn){document.querySelectorAll(".mini-toggle button").forEach(b=>b.classList.toggle("on",b===btn));judge();}
-document.getElementById("addAst").onclick=()=>{S.assets.push({id:uid(),on:true,name:"新しい資産",owner:"共有",type:"cash",amt:100});update();};
-document.getElementById("addLoan").onclick=()=>{S.loans.push({id:uid(),on:true,name:"新しいローン",balance:100,monthly:2,rate:1});update();};
-document.getElementById("addInc").onclick=()=>{S.incomes.push({id:uid(),on:true,name:"新しい収入",start:Y0+5,annual:100});update();};
-document.getElementById("addKid").onclick=()=>{S.kids.push({id:uid(),on:true,name:"子",birth:Y0,uni:500});update();};
-document.getElementById("addGoal").onclick=()=>{S.goals.push({id:uid(),on:true,name:"新しい目標",type:"once",year:Y0+1,start:Y0,end:Y0+3,cost:50});update();};
-document.getElementById("pvbtn").onclick=e=>{const on=document.body.classList.toggle("pv");
- e.target.setAttribute("aria-pressed",on);e.target.textContent=on?"金額を表示":"金額を隠す";};
-document.getElementById("expEnc").onclick=exportEnc;
-document.getElementById("expPlain").onclick=()=>{dl(`lifeplan-${Y0}.json`,JSON.stringify(S,null,1));
+$("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-t]");if(b)selectTab(b.dataset.t);});
+$("modeTab").onclick=()=>{S.ui.mode="tab";save();applyMode();};
+$("modeScroll").onclick=()=>{S.ui.mode="scroll";save();applyMode();};
+$("retAge").addEventListener("input",e=>{S.retireAge=+e.target.value;save();judge();});
+$("pieOwner").onclick=()=>{S.ui.pie="owner";togglePie();};
+$("pieType").onclick=()=>{S.ui.pie="type";togglePie();};
+function togglePie(){$("pieOwner").classList.toggle("on",S.ui.pie==="owner");
+ $("pieType").classList.toggle("on",S.ui.pie==="type");save();judge();}
+$("addAst").onclick=()=>{S.assets.push({id:uid(),on:true,name:"新しい資産",owner:"共有",type:"cash",amt:100});update(true);};
+$("addLoan").onclick=()=>{S.loans.push({id:uid(),on:true,name:"新しいローン",balance:100,monthly:2,rate:1});update(true);};
+$("addInc").onclick=()=>{S.incomes.push({id:uid(),on:true,name:"新しい収入",start:Y0+5,annual:100});update(true);};
+$("addKid").onclick=()=>{S.kids.push({id:uid(),on:true,name:"子",birth:Y0,uni:500});update(true);};
+$("addGoal").onclick=()=>{S.goals.push({id:uid(),on:true,name:"新しい目標",type:"once",year:Y0+1,start:Y0,end:Y0+3,cost:50});update(true);};
+$("pvbtn").onclick=e=>{const on=document.body.classList.toggle("pv");
+ e.target.setAttribute("aria-pressed",on);e.target.textContent=on?"表示":"隠す";};
+$("expEnc").onclick=()=>{$("menu").open=false;exportEnc();};
+$("expPlain").onclick=()=>{$("menu").open=false;dl(`lifeplan-${Y0}.json`,JSON.stringify(S,null,1));
  stat("平文JSONを書き出しました。個人情報を含むためコミット・共有はしないでください。");};
-document.getElementById("impBtn").onclick=()=>document.getElementById("impFile").click();
-document.getElementById("impFile").addEventListener("change",e=>{if(e.target.files[0])importAny(e.target.files[0]);e.target.value="";});
-document.getElementById("resetBtn").onclick=()=>{if(confirm("入力した内容をすべて消してサンプル値に戻します。よろしいですか？")){S=DEF();save();renderAll();}};
+$("impBtn").onclick=()=>{$("menu").open=false;$("impFile").click();};
+$("impFile").addEventListener("change",e=>{if(e.target.files[0])importAny(e.target.files[0]);e.target.value="";});
+$("resetBtn").onclick=()=>{$("menu").open=false;
+ if(confirm("入力した内容をすべて消してサンプル値に戻します。よろしいですか？")){S=DEF();save();renderAll();}};
+document.addEventListener("click",e=>{const m=$("menu");if(m.open&&!m.contains(e.target))m.open=false;});
+
+/* ---------- レポート（妻と共有するPDF） ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function openReport(){
+ const LP=loanPlan(), ra=S.retireAge, sim=fullSim(ra,LP), need=neededAt(ra,LP),
+       have=balAtRet(sim), gap=have-(need??0), ok=gap>=0&&sim.min>=0, p=mcProb(ra,LP);
+ const dep=sim.rows.find(r=>r.y>=sim.retY&&r.bal<0);
+ const r0=sim.rows.find(r=>r.y===sim.retY);
+ const wdr=r0&&have>0?(r0.cf<0?(Math.abs(r0.cf)/have*100).toFixed(1)+"%":"取り崩しなし"):"—";
+ const sec=$("sec-charts"), wasHidden=sec.hidden;
+ if(wasHidden){sec.hidden=false; judge();}
+ const img1=$("ch1").toDataURL(), img3=$("ch3").toDataURL(), img4=$("ch4").toDataURL();
+ if(wasHidden)sec.hidden=true;
+ const b=S.basic, today=new Date().toLocaleDateString("ja-JP");
+ const astRows=S.assets.map(a=>`<tr class="${a.on?"":"ref"}"><td>${esc(a.name)}</td><td>${esc(a.owner)}</td><td>${TYPES[a.type]||""}</td><td class="r">${fmt(astYen(a))}${a.on?"":"（参考）"}</td></tr>`).join("");
+ const loanRows=S.loans.filter(l=>l.on).map(l=>`<tr><td>${esc(l.name)}</td><td class="r">${fmt(+l.balance)}</td><td class="r">月${l.monthly}万</td><td class="r">${LP.per[S.loans.indexOf(l)].done}</td></tr>`).join("")||`<tr><td colspan="4">なし</td></tr>`;
+ const incRows=S.incomes.filter(i=>i.on).map(i=>`<tr><td>${esc(i.name)}</td><td class="r">${i.start}年〜</td><td class="r">${fmt(+i.annual)}/年</td></tr>`).join("")||`<tr><td colspan="3">なし</td></tr>`;
+ const kidRows=S.kids.filter(k=>k.on).map(k=>`<tr><td>${esc(k.name)}</td><td class="r">${k.birth}年生</td><td class="r">大学 ${fmt(+k.uni)}（${+k.birth+18}〜${+k.birth+21}年）</td></tr>`).join("")||`<tr><td colspan="3">—</td></tr>`;
+ const gs=S.goals.filter(g=>g.on).slice().sort((x,y)=>(x.type==="once"?+x.year:+x.start)-(y.type==="once"?+y.year:+y.start));
+ const goalRows=gs.map(g=>`<tr><td>${esc(g.name)}</td><td class="r">${g.type==="once"?g.year+"年":g.start+"〜"+g.end+"年"}</td><td class="r">${fmt(+g.cost)}${g.type==="annual"?"/年":""}</td></tr>`).join("");
+ const offN=S.goals.length-gs.length;
+ let quick="";
+ for(const a of [40,45,50,55,60]){
+  if(a<=b.curAge){quick+=`<tr><td>${a}歳</td><td colspan="3" class="r">—</td></tr>`;continue;}
+  const s2=fullSim(a,LP),n2=neededAt(a,LP),h2=balAtRet(s2),o2=h2-(n2??0)>=0&&s2.min>=0;
+  quick+=`<tr><td>${a}歳${a===ra?"（現在の案）":""}</td><td class="r">${fmt(h2)}</td><td class="r">${fmt(n2)}</td><td class="r" style="color:${o2?"#2B5B7E":"#C73E3A"};font-weight:700">${o2?"◎ 可":"△ 不足"}</td></tr>`;}
+ $("repBody").innerHTML=`
+  <h2>人生設計簿<span>家族会議用レポート</span></h2>
+  <div class="meta">作成日 ${today} ／ ${ra}歳リタイア案 ／ 前提: 利回り${b.ret}%・ブレσ${b.vol}%・インフレ${b.infl}%・為替${b.fx}円/$・年金${fmt(+b.pension)}(${b.pensionAge}歳〜)</div>
+  <div class="verdict ${ok?"ok":""}"><span class="vbig">${ok?"達成":"不足"}</span>
+   <div class="vgrid">
+    <div><i>必要資産</i><em>${fmt(need)}</em></div>
+    <div><i>予測資産</i><em>${fmt(have)}</em></div>
+    <div><i>過不足</i><em style="color:${gap>=0?"#2B5B7E":"#C73E3A"}">${(gap>=0?"+":"")+fmt(gap)}</em></div>
+    <div><i>成功確率</i><em>${p==null?"—":p+"%"}</em></div>
+    <div><i>資産が尽きる歳</i><em>${dep?dep.age+"歳":"尽きない"}</em></div>
+    <div><i>初年度取り崩し率</i><em>${wdr}</em></div>
+   </div></div>
+  <img src="${img1}" alt="資産の推移">
+  <div class="two"><img src="${img3}" alt="資産の内訳"><img src="${img4}" alt="ローン残高の推移"></div>
+  <h3>いまの家計 ｜ 資産 ${fmt(assetsNow())} − 負債 ${fmt(debtNow())} ＝ 純資産 ${fmt(assetsNow()-debtNow())}</h3>
+  <table><tr><th>資産</th><th>持ち主</th><th>種類</th><th class="r">円換算</th></tr>${astRows}</table>
+  <table><tr><th>ローン</th><th class="r">残高</th><th class="r">返済</th><th class="r">完済予定</th></tr>${loanRows}</table>
+  <h3>リタイア年齢の早見表</h3>
+  <table><tr><th>年齢</th><th class="r">予測資産</th><th class="r">必要資産</th><th class="r">判定</th></tr>${quick}</table>
+  <div class="two">
+   <div><h3>収入の柱（リタイア後）</h3><table>${incRows}</table></div>
+   <div><h3>子どもと教育費</h3><table>${kidRows}</table></div>
+  </div>
+  <h3>やりたいことリスト（${gs.length}件${offN?`・チェック外 ${offN}件は除外`:""}）</h3>
+  <table>${goalRows}</table>
+  <p class="note">※ 簡易モデルによる試算で、将来を保証するものではありません。金額は今日の価値で入力し、インフレ率で将来価格に換算して計算しています。</p>`;
+ $("report").hidden=false; document.body.classList.add("printing"); $("report").scrollTop=0;
+}
+function closeReport(){$("report").hidden=true; document.body.classList.remove("printing");}
+$("repBtn").onclick=openReport;
+$("repClose").onclick=closeReport;
+$("repPrint").onclick=()=>window.print();
+$("verTag").textContent="v"+APP_VER;
+$("verLine").textContent=`人生設計簿 v${APP_VER} ｜ 最終更新 ${APP_UPDATED}`;
 renderAll();
-if(!storeOK)stat("この環境では自動保存できません（GitHub Pages上では有効）。書き出しでバックアップを。");
+if(!storeOK)stat("この環境では自動保存できません（GitHub Pages上では有効）。データ ▾ から書き出しを。");
 </script>
 </body>
 </html>

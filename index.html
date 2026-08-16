@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <style>
 :root{--paper:#F4F2EC;--card:#FBFAF6;--ink:#22303C;--sub:#6B6A5E;
  --ai:#2B5B7E;--shu:#C73E3A;--take:#4E8A63;--yama:#C99A2E;--nezu:#8A8578;--line:#D9D3C5}
@@ -191,6 +192,7 @@ body.pv .money,body.pv input[type=number],body.pv canvas{filter:blur(6px);user-s
     <button id="pvbtn" aria-pressed="false">隠す</button>
     <details class="menu" id="menu"><summary>データ ▾</summary>
       <div class="dd">
+        <button id="shareLink">共有リンクを作る（家族の携帯へ）</button>
         <button id="expEnc">暗号化して書き出す</button>
         <button id="expPlain">JSONで書き出す</button>
         <button id="impBtn">読み込む</button>
@@ -330,7 +332,7 @@ body.pv .money,body.pv input[type=number],body.pv canvas{filter:blur(6px);user-s
 "use strict";
 const K="lifeplan_v1", Y0=new Date().getFullYear();
 /* ▼ 更新のたびにここを書き換える ▼ */
-const APP_VER="4.0", APP_UPDATED="2026年8月15日";
+const APP_VER="4.1", APP_UPDATED="2026年8月15日";
 const uid=()=>Math.random().toString(36).slice(2,9);
 const OWNERS=["私","妻","子ども","共有"];
 const GOAL_WHO=["私","妻","子ども","家族"];
@@ -725,6 +727,40 @@ async function importAny(file){
  }catch(e){alert("JSONファイルとして読み取れませんでした。");}
 }
 
+/* ---------- 共有リンク（家族の携帯へのミラーリング） ---------- */
+const b64u=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const unb64u=s=>{s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return Uint8Array.from(atob(s),c=>c.charCodeAt(0));};
+const hasLZ=()=>typeof LZString!=="undefined";
+async function makeShareLink(){
+ const pass=prompt("受け取り用のパスワードを決めてください（リンクとは別に、口頭やLINE通話などで伝える）");if(!pass)return;
+ const st=nowStamp();
+ const json=JSON.stringify({exportedAt:st.disp,data:S});
+ const packed=hasLZ()?LZString.compressToUint8Array(json):new TextEncoder().encode(json);
+ const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+ const key=await keyFrom(pass,salt);
+ const enc=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,packed);
+ const url=`${location.origin}${location.pathname}#d=${hasLZ()?"z":"t"}.${b64u(salt)}.${b64u(iv)}.${b64u(enc)}`;
+ if(navigator.share){try{await navigator.share({title:"人生設計簿 最新プラン",url});
+  stat(`共有リンクを送信しました（${st.disp}時点のデータ・暗号化済み）。`);return;}catch(e){if(e.name==="AbortError")return;}}
+ try{await navigator.clipboard.writeText(url);
+  stat(`共有リンクをコピーしました（${st.disp}時点・暗号化済み）。LINE等に貼り付けて送ってください。`);}
+ catch(e){prompt("このリンクをコピーして送ってください",url);}
+}
+async function receiveShare(){
+ const m=location.hash.match(/^#d=([zt])\.([^.]+)\.([^.]+)\.(.+)$/); if(!m)return;
+ history.replaceState(null,"",location.pathname+location.search);
+ if(!confirm("共有リンクからプランを受け取りました。読み込みますか？（この端末の入力は置き換わります）"))return;
+ const pass=prompt("共有パスワードを入力してください");if(pass==null)return;
+ try{
+  const key=await keyFrom(pass,unb64u(m[2]));
+  const raw=new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64u(m[3])},key,unb64u(m[4])));
+  const json=m[1]==="z"?LZString.decompressFromUint8Array(raw):new TextDecoder().decode(raw);
+  const j=JSON.parse(json);
+  S=migrate(j.data&&j.exportedAt?j.data:j); save(); renderAll();
+  stat(`共有プランを読み込みました ｜ 送信側の書き出し日時: ${j.exportedAt||"—"}`);
+ }catch(e){alert("パスワードが違うか、リンクが壊れています。送信側にもう一度リンクを作ってもらってください。");}
+}
+
 /* ---------- イベント ---------- */
 load();
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-t]");if(!b)return;
@@ -758,6 +794,7 @@ $("expEnc").onclick=()=>{$("menu").open=false;exportEnc();};
 $("expPlain").onclick=()=>{$("menu").open=false;const st=nowStamp();
  dl(`lifeplan_${st.file}.json`,JSON.stringify({exportedAt:st.disp,data:S},null,1));
  stat(`平文JSONを書き出しました（${st.disp}）。個人情報を含むためコミット・共有はしないでください。`);};
+$("shareLink").onclick=()=>{$("menu").open=false;makeShareLink();};
 $("impBtn").onclick=()=>{$("menu").open=false;$("impFile").click();};
 $("impFile").addEventListener("change",e=>{if(e.target.files[0])importAny(e.target.files[0]);e.target.value="";});
 $("resetBtn").onclick=()=>{$("menu").open=false;
@@ -864,6 +901,7 @@ applyFold();
 $("verTag").textContent="v"+APP_VER;
 $("verLine").textContent=`人生設計簿 v${APP_VER} ｜ 最終更新 ${APP_UPDATED}`;
 renderAll();
+receiveShare();
 if(!storeOK)stat("この環境では自動保存できません（GitHub Pages上では有効）。データ ▾ から書き出しを。");
 </script>
 </body>
